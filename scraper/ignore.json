@@ -1,0 +1,5 @@
+{
+  "_comment": "Edita esta lista para excluir chats. ids = WhatsApp chat IDs (ex: 123456789@c.us ou 123-456@g.us). nameContains = substrings (case-insensitive) que se aparecerem no nome do chat fazem-no ser ignorado.",
+  "ids": [],
+  "nameContains": []
+}

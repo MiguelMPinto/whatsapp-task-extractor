@@ -1,0 +1,12 @@
+# Node
+scraper/node_modules/
+scraper/npm-debug.log*
+
+# Sessão WhatsApp Web (NUNCA commitar - equivale a estares logado)
+session/
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Output gerado
+data/conversas.txt
+data/todo.json

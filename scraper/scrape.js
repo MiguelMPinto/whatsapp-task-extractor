@@ -10,7 +10,13 @@ const OUTPUT_FILE = path.resolve(__dirname, '..', 'data', 'conversas.txt');
 const IGNORE_FILE = path.resolve(__dirname, 'ignore.json');
 const WINDOW_MS = 48 * 60 * 60 * 1000; // 48h rolling
 
-const ignore = JSON.parse(fs.readFileSync(IGNORE_FILE, 'utf8'));
+let ignore;
+try {
+  ignore = JSON.parse(fs.readFileSync(IGNORE_FILE, 'utf8'));
+} catch {
+  console.error('>> ignore.json nao encontrado em', IGNORE_FILE, '— a usar lista vazia.');
+  ignore = { ids: [], nameContains: [] };
+}
 const cutoff = Date.now() - WINDOW_MS;
 
 function isIgnored(chat) {
@@ -90,6 +96,7 @@ client.on('ready', async () => {
     }
 
     const cabecalho = `# Conversas WhatsApp — ultimas 48h\n# Gerado: ${new Date().toISOString()}\n# Chats com mensagens: ${blocos.length}\n\n`;
+    fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
     fs.writeFileSync(OUTPUT_FILE, cabecalho + blocos.join('\n\n') + '\n', 'utf8');
     console.log(`>> Escrito ${OUTPUT_FILE} (${blocos.length} chats com texto).`);
   } catch (err) {

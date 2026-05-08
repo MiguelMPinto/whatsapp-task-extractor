@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Todo</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="preload" href="/assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/Inter-SemiBold.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/styles.css">
+    <script>
+        (function() {
+            try {
+                var prefs = JSON.parse(localStorage.getItem('wt:prefs:v1') || '{}');
+                var tema = prefs.tema || 'auto';
+                var dark = tema === 'escuro' || (tema === 'auto' &&
+                    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (_) {}
+        })();
+    </script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="brand">
+            <span class="logo" aria-hidden="true">📋</span>
+            <h1>WhatsApp Todo</h1>
+        </div>
+        <div class="meta">
+            <span id="contador" class="contador">—</span>
+            <span id="ultima-atualizacao" class="atualizacao" title="Última actualização">—</span>
+        </div>
+        <div class="actions">
+            <button id="btn-refresh" type="button" class="btn btn-primary" title="Actualizar (r)">
+                <span aria-hidden="true">🔄</span> Actualizar
+            </button>
+            <button id="btn-tema" type="button" class="btn btn-icon" aria-label="Alternar tema" title="Tema (auto/claro/escuro)">
+                <span id="icone-tema" aria-hidden="true">🌓</span>
+            </button>
+            <button id="btn-ajuda" type="button" class="btn btn-icon" aria-label="Ajuda" title="Atalhos (?)">
+                <span aria-hidden="true">?</span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="filtros" aria-label="Filtros">
+        <div class="pills" role="group" aria-label="Prioridade">
+            <button type="button" class="pill activa" data-prioridade="todas">Todas</button>
+            <button type="button" class="pill pill-alta" data-prioridade="ALTA">Alta</button>
+            <button type="button" class="pill pill-media" data-prioridade="MEDIA">Média</button>
+            <button type="button" class="pill pill-baixa" data-prioridade="BAIXA">Baixa</button>
+        </div>
+        <div class="filtros-extra">
+            <label class="campo-pesquisa">
+                <span class="icone-pesquisa" aria-hidden="true">🔍</span>
+                <input id="pesquisa" type="search" placeholder="Pesquisar... (/)" autocomplete="off">
+            </label>
+            <label class="toggle">
+                <input id="toggle-concluidas" type="checkbox">
+                <span>Mostrar concluídas</span>
+            </label>
+            <label class="select-ord">
+                <span>Ordenar:</span>
+                <select id="ordenacao">
+                    <option value="prioridade">Prioridade</option>
+                    <option value="prazo">Prazo</option>
+                    <option value="categoria">Categoria</option>
+                    <option value="confianca">Confiança</option>
+                </select>
+            </label>
+        </div>
+    </nav>
+
+    <main id="lista" aria-live="polite"></main>
+
+    <div id="estado-carregar" class="estado" hidden>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+    </div>
+
+    <div id="estado-vazio" class="estado" hidden>
+        <div class="estado-icone" aria-hidden="true">✨</div>
+        <h2>Sem tarefas a mostrar</h2>
+        <p>Tenta limpar os filtros ou marcar "Mostrar concluídas".</p>
+    </div>
+
+    <div id="estado-primeiro-uso" class="estado" hidden>
+        <div class="estado-icone" aria-hidden="true">👋</div>
+        <h2>Bem-vindo!</h2>
+        <p>Ainda não há tarefas. Corre o pipeline (scraper + analyzer) para gerar a tua primeira lista.</p>
+    </div>
+
+    <div id="estado-erro" class="estado" hidden>
+        <div class="estado-icone" aria-hidden="true">⚠️</div>
+        <h2>Erro ao carregar</h2>
+        <p id="estado-erro-msg">Não foi possível carregar as tarefas.</p>
+        <button id="btn-retry" type="button" class="btn btn-primary">Tentar novamente</button>
+    </div>
+
+    <div id="toast-zona" class="toast-zona" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="overlay-ajuda" class="overlay" hidden>
+        <div class="painel" role="dialog" aria-labelledby="ajuda-titulo">
+            <h2 id="ajuda-titulo">Atalhos de teclado</h2>
+            <table class="atalhos">
+                <tbody>
+                    <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>Navegar tarefas</td></tr>
+                    <tr><td><kbd>Enter</kbd></td><td>Expandir / colapsar</td></tr>
+                    <tr><td><kbd>Espaço</kbd></td><td>Marcar concluída</td></tr>
+                    <tr><td><kbd>e</kbd></td><td>Editar notas</td></tr>
+                    <tr><td><kbd>/</kbd></td><td>Focar pesquisa</td></tr>
+                    <tr><td><kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd></td><td>Filtrar Alta / Média / Baixa</td></tr>
+                    <tr><td><kbd>0</kbd></td><td>Limpar filtros</td></tr>
+                    <tr><td><kbd>r</kbd></td><td>Actualizar</td></tr>
+                    <tr><td><kbd>?</kbd></td><td>Mostrar esta ajuda</td></tr>
+                    <tr><td><kbd>Esc</kbd></td><td>Fechar / limpar</td></tr>
+                </tbody>
+            </table>
+            <button id="btn-fechar-ajuda" type="button" class="btn btn-primary">Fechar</button>
+        </div>
+    </div>
+
+    <template id="tpl-grupo">
+        <section class="grupo">
+            <h2 class="grupo-titulo"></h2>
+            <div class="grupo-lista"></div>
+        </section>
+    </template>
+
+    <template id="tpl-tarefa">
+        <article class="tarefa" tabindex="0">
+            <div class="tarefa-resumo">
+                <input type="checkbox" class="checkbox" aria-label="Concluída">
+                <div class="conteudo">
+                    <h3 class="titulo"></h3>
+                    <div class="linha-meta">
+                        <span class="pessoa"></span>
+                        <span class="separador" aria-hidden="true">·</span>
+                        <span class="conversa"></span>
+                    </div>
+                    <div class="linha-info">
+                        <span class="prazo"></span>
+                        <span class="categoria"></span>
+                        <span class="tipo"></span>
+                    </div>
+                </div>
+                <span class="confianca" title="Confiança"></span>
+            </div>
+            <div class="tarefa-detalhe" hidden>
+                <p class="descricao"></p>
+                <blockquote class="extracto"></blockquote>
+                <div class="campos-edit">
+                    <label class="campo">
+                        <span>Notas pessoais</span>
+                        <textarea class="notas" rows="3" placeholder="Adiciona uma nota..."></textarea>
+                    </label>
+                    <div class="campos-row">
+                        <label class="campo">
+                            <span>Prazo (override)</span>
+                            <input type="date" class="prazo-edit">
+                        </label>
+                        <label class="campo">
+                            <span>Prioridade (override)</span>
+                            <select class="prioridade-edit">
+                                <option value="">— sem override —</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="MEDIA">Média</option>
+                                <option value="BAIXA">Baixa</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <script src="/app.js" defer></script>
+</body>
+</html>

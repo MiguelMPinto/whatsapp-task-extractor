@@ -1,0 +1,9 @@
+{
+  "name": "whatsapp-task-extractor-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "node-notifier": "^10.0.1"
+  }
+}

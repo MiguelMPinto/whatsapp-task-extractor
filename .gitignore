@@ -1,6 +1,8 @@
 # Node
 scraper/node_modules/
 scraper/npm-debug.log*
+scripts/node_modules/
+scripts/npm-debug.log*
 
 # Sessão WhatsApp Web (NUNCA commitar - equivale a estares logado)
 session/
@@ -10,3 +12,10 @@ session/
 # Output gerado
 data/conversas.txt
 data/todo.json
+data/todo.json.tmp
+data/estado.json
+data/estado.json.tmp
+data/.lock
+
+# Logs
+logs/
